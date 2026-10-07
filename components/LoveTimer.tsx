@@ -1,73 +1,53 @@
+import type { FC } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
-import React, { useState, useEffect } from 'react';
+const DAYS_TO_PAUSE = (Date.UTC(2026, 8, 24) - Date.UTC(2025, 3, 20)) / 86_400_000;
 
-interface TimeLeft {
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
-const LoveTimer: React.FC = () => {
-  const startDate = new Date('2025-04-20T00:00:00');
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-  const [isStarted, setIsStarted] = useState(false);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const now = new Date();
-      const difference = now.getTime() - startDate.getTime();
-
-      if (difference > 0) {
-        setIsStarted(true);
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((difference / 1000 / 60) % 60),
-          seconds: Math.floor((difference / 1000) % 60),
-        });
-      } else {
-        setIsStarted(false);
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  if (!isStarted) {
-    return (
-      <div className="flex flex-col items-center justify-center animate-reveal">
-        <span className="text-[10px] text-pink-400 font-bold uppercase tracking-[0.4em]">Establishment: 20/04/2025</span>
-      </div>
-    );
-  }
+const LoveTimer: FC = () => {
+  const reduceMotion = useReducedMotion();
 
   return (
-    <div className="flex flex-col items-center gap-2 animate-reveal">
-      <div className="flex items-center gap-4 md:gap-8">
-        <TimeUnit value={timeLeft.days} label="Ngày" />
-        <TimeSeparator />
-        <TimeUnit value={timeLeft.hours} label="Giờ" />
-        <TimeSeparator />
-        <TimeUnit value={timeLeft.minutes} label="Phút" />
-        <TimeSeparator />
-        <TimeUnit value={timeLeft.seconds} label="Giây" />
+    <motion.div
+      className="relative mx-auto max-w-xl"
+      initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+      whileInView={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="relative rotate-[-1deg] overflow-hidden border-2 border-dashed border-[#c4bcb0] bg-[#fffdf8] p-8 shadow-[0_14px_40px_-20px_rgba(40,39,34,0.18)] sm:p-12">
+        {/* Pin */}
+        <div className="absolute left-1/2 top-3 h-4 w-4 -translate-x-1/2 rounded-full bg-[#873f43] shadow-[0_2px_4px_rgba(0,0,0,0.25)] sm:top-4" aria-hidden="true" />
+
+        {/* Stamp mark */}
+        <div className="absolute right-5 top-5 sm:right-8 sm:top-8" aria-hidden="true">
+          <div className="flex h-14 w-14 sm:h-16 sm:w-16 rotate-6 flex-col items-center justify-center rounded border-2 border-dashed border-[#873f43]/40 bg-[#fffaf2] text-[#873f43]">
+            <span className="text-[9px] font-semibold uppercase tracking-widest">Pause</span>
+            <span className="text-[10px] font-bold">2026</span>
+          </div>
+        </div>
+
+        {/* Postcard lines */}
+        <div className="absolute inset-x-0 top-0 h-px bg-[#d6c9b8]" aria-hidden="true" />
+        <div className="absolute inset-x-0 top-3 h-px bg-[#d6c9b8]/60" aria-hidden="true" />
+
+        {/* Header */}
+        <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#873f43]">Khoảng thời gian</p>
+
+        {/* Days count */}
+        <div className="mt-8 sm:mt-10">
+          <p className="text-serif text-[clamp(5rem,12vw,7.5rem)] leading-none tabular-nums tracking-[-0.09em] text-[#282722]">{DAYS_TO_PAUSE}</p>
+          <p className="mt-2 text-serif text-2xl italic text-[#77766e]">ngày đồng hành</p>
+        </div>
+
+        {/* Postcard dates */}
+        <div className="mt-8 border-t border-[#d6c9b8] pt-5 sm:mt-10">
+          <p className="font-['Courier_New',monospace] text-sm tracking-wide text-[#66645d]">
+            <time dateTime="2025-04-20">20.04.2025</time> — <time dateTime="2026-09-24">24.09.2026</time>
+          </p>
+        </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
-
-const TimeUnit = ({ value, label }: { value: number, label: string }) => (
-  <div className="flex flex-col items-center">
-    <div className="text-3xl md:text-5xl font-bold text-serif text-pink-500 tracking-tighter drop-shadow-sm">
-      {value.toString().padStart(2, '0')}
-    </div>
-    <span className="text-[8px] uppercase tracking-[0.2em] text-pink-300 font-black mt-1">{label}</span>
-  </div>
-);
-
-const TimeSeparator = () => (
-  <div className="text-xl md:text-3xl font-light text-pink-200 mt-1">:</div>
-);
 
 export default LoveTimer;

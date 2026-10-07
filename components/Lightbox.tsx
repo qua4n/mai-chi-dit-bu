@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GalleryImage } from '../types';
 import { getCloudinaryUrl } from '../services/cloudinaryService';
@@ -10,95 +9,145 @@ interface LightboxProps {
 }
 
 const Lightbox: React.FC<LightboxProps> = ({ image, onClose }) => {
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    if (image) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
+    setIsLoading(true);
+  }, [image?.id]);
+
+  useEffect(() => {
+    if (!image) return;
+
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+    };
   }, [image]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && image) {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [image, onClose]);
 
   return (
     <AnimatePresence>
       {image && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto overflow-x-hidden md:overflow-hidden bg-black/95 md:backdrop-blur-3xl">
-          <motion.div 
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#282722]"
+          role="dialog"
+          aria-modal="true"
+          aria-label={image.title}
+        >
+          {/* Backdrop */}
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
             className="absolute inset-0"
             onClick={onClose}
           />
-          
-          <motion.button 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            className="fixed top-4 right-4 md:top-8 md:right-8 z-[110] glass p-2.5 md:p-3 rounded-full hover:bg-white/10 transition-colors"
+
+          {/* Close button */}
+          <motion.button
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            type="button"
+            className="fixed right-4 top-4 z-[120] flex h-11 w-11 items-center justify-center rounded-full border border-[#f6f2e9] bg-[#f6f2e9] text-[#282722] shadow-[0_8px_30px_rgba(0,0,0,0.4)] transition-colors duration-200 hover:border-[#873f43] hover:bg-[#873f43] hover:text-[#f6f2e9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f6f2e9] focus-visible:ring-offset-2 focus-visible:ring-offset-[#282722] md:right-8 md:top-8 md:h-12 md:w-12"
             onClick={onClose}
+            aria-label="Đóng"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="md:w-6 md:h-6"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="md:h-6 md:w-6"
+              aria-hidden="true"
+            >
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
           </motion.button>
 
-          <motion.div 
-            layoutId={`container-${image.id}`}
-            className="relative w-full min-h-full flex flex-col md:flex-row gap-6 md:gap-12 items-center justify-center p-6 md:p-12 z-[105]"
+          {/* Main image */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-[110] flex h-full w-full items-center justify-center p-4 pb-24 md:p-8 md:pb-28"
           >
-            {/* Image Section */}
-            <div className="w-full flex-1 flex items-center justify-center">
-              <motion.img 
-                layoutId={`image-${image.id}`}
-                src={getCloudinaryUrl(image.url)} 
-                alt={image.title} 
-                className="max-w-full max-h-[70vh] md:max-h-[85vh] object-contain rounded-xl shadow-2xl border border-white/10"
-              />
-            </div>
-
-            {/* Info Section */}
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ delay: 0.15 }}
-              className="w-full md:w-[400px] space-y-5 md:space-y-8 bg-black/40 md:bg-transparent p-4 md:p-0 rounded-3xl md:rounded-none backdrop-blur-md md:backdrop-blur-none"
-            >
-              <div className="space-y-2 md:space-y-3">
-                <span className="text-pink-400 font-bold uppercase tracking-widest text-[10px] md:text-xs">{image.category}</span>
-                <h2 className="text-2xl md:text-5xl font-extrabold tracking-tight font-['Montserrat'] leading-tight">{image.title}</h2>
-                <div className="flex items-center gap-3 pt-2">
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 shadow-lg shadow-pink-500/20"></div>
-                  <div>
-                    <p className="text-xs md:text-sm font-semibold">{image.artist}</p>
-                    <p className="text-[10px] md:text-xs text-gray-500 italic">"Người đàn bà lực điền"</p>
-                  </div>
-                </div>
+            {isLoading && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="h-10 w-10 animate-spin rounded-full border-2 border-[#f6f2e9]/30 border-t-[#f6f2e9]" aria-label="Đang tải ảnh" />
               </div>
-
-              <div className="p-5 md:p-6 glass rounded-2xl space-y-3 md:space-y-4 border-white/5 bg-white/[0.01]">
-                <div className="flex justify-between text-[10px] md:text-xs">
-                  <span className="text-gray-500 font-medium">Kích thước</span>
-                  <span className="text-white font-bold">{image.width} × {image.height}</span>
-                </div>
-                <div className="flex justify-between text-[10px] md:text-xs">
-                  <span className="text-gray-500 font-medium">Trạng thái</span>
-                  <span className="text-pink-400 font-bold">Cloudinary Optimized</span>
-                </div>
-                <div className="flex justify-between text-[10px] md:text-xs">
-                  <span className="text-gray-500 font-medium">Lưu trữ lúc</span>
-                  <span className="text-white font-bold">Tháng 12, 2024</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 pb-8 md:pb-0">
-                <button className="py-3.5 md:py-4 px-4 bg-white text-black text-[10px] md:text-xs font-black rounded-xl hover:bg-pink-400 transition-colors uppercase tracking-widest shadow-xl">
-                  Lưu ảnh
-                </button>
-                <button className="py-3.5 md:py-4 px-4 glass text-white text-[10px] md:text-xs font-black rounded-xl hover:bg-white/10 transition-colors uppercase tracking-widest">
-                  Chia sẻ
-                </button>
-              </div>
-            </motion.div>
+            )}
+            <img
+              src={getCloudinaryUrl(image.url)}
+              alt={image.title}
+              onLoad={() => setIsLoading(false)}
+              className={`max-h-[78vh] w-auto max-w-[92vw] rounded-sm object-contain shadow-[0_32px_80px_-20px_rgba(0,0,0,0.45)] md:max-h-[82vh] md:max-w-[88vw] ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-500`}
+            />
           </motion.div>
+
+          {/* Floating metadata panel */}
+          <motion.aside
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ delay: 0.05, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed bottom-0 left-0 right-0 z-[115] border-t border-[#f6f2e9]/10 bg-[#282722]/80 backdrop-blur-md"
+          >
+            <div className="mx-auto flex max-w-screen-xl flex-col gap-3 px-5 py-4 md:flex-row md:items-end md:justify-between md:px-8 md:py-5">
+              <div className="min-w-0">
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-[#e6bdb0]">
+                  {image.category}
+                </span>
+                <h2 className="mt-1 font-['Playfair_Display'] text-xl leading-tight tracking-tight text-[#f6f2e9] md:text-2xl">
+                  {image.title}
+                </h2>
+                <p className="mt-1 truncate text-sm text-[#c9c1b6]">
+                  {image.artist}
+                </p>
+              </div>
+
+              <dl className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-[#c9c1b6]">
+                <div className="flex items-center gap-2">
+                  <dt className="font-medium text-[#77766e]">Kích thước</dt>
+                  <dd className="text-[#f6f2e9]">
+                    {image.width} × {image.height}
+                  </dd>
+                </div>
+                {image.cloudinaryData?.format && (
+                  <div className="flex items-center gap-2">
+                    <dt className="font-medium text-[#77766e]">Định dạng</dt>
+                    <dd className="uppercase text-[#f6f2e9]">
+                      {image.cloudinaryData.format}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+          </motion.aside>
         </div>
       )}
     </AnimatePresence>

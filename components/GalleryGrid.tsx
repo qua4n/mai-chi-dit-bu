@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion, Variants } from 'framer-motion';
 import { GalleryImage } from '../types';
@@ -14,57 +13,69 @@ const containerVariants: Variants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
+      staggerChildren: 0.06,
+      delayChildren: 0.05,
     },
   },
 };
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, scale: 0.9, y: 30 },
-  visible: { 
-    opacity: 1, 
-    scale: 1,
+  hidden: { opacity: 0, y: 64 },
+  visible: {
+    opacity: 1,
     y: 0,
-    transition: { 
-      duration: 1.2, 
-      ease: [0.16, 1, 0.3, 1] 
-    }
+    transition: {
+      duration: 1.1,
+      ease: [0.16, 1, 0.3, 1],
+    },
   },
 };
 
 const GalleryGrid: React.FC<GalleryGridProps> = ({ images, onImageClick }) => {
+
   return (
-    <motion.div 
+    <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="columns-2 md:columns-2 lg:columns-3 gap-4 md:gap-10 py-10"
+      className="columns-2 lg:columns-3 gap-3 sm:gap-5 md:gap-7 py-8 md:py-14"
     >
-      {images.map((image) => (
-        <motion.div 
-          key={image.id}
-          variants={itemVariants}
-          className="relative mb-4 md:mb-10 break-inside-avoid group cursor-pointer overflow-hidden rounded-2xl md:rounded-[2.5rem] border-2 md:border-4 border-white shadow-lg hover:shadow-pink-200/60 transition-all duration-700"
-          onClick={() => onImageClick(image)}
-        >
-          <div className="overflow-hidden aspect-[4/5] relative">
-            <motion.img 
-              src={getCloudinaryUrl(image.url, { width: 1000 })} 
-              alt={image.title}
-              className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110"
-              loading="lazy"
-            />
-            
-            {/* Soft pink overlay on hover */}
-            <div className="absolute inset-0 bg-pink-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-          </div>
-          
-          <div className="absolute bottom-0 left-0 right-0 p-3 md:p-8 bg-gradient-to-t from-black/70 via-black/20 to-transparent md:translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-            <span className="text-[7px] md:text-[9px] uppercase tracking-[0.2em] md:tracking-[0.3em] text-pink-300 font-bold">{image.category}</span>
-            <h3 className="text-xs md:text-lg font-bold text-white tracking-tight leading-tight">{image.title}</h3>
-          </div>
-        </motion.div>
-      ))}
+      {images.map((image, index) => {
+        const featured = index % 7 === 0;
+        return (
+          <motion.button
+            type="button"
+            key={image.id}
+            variants={itemVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.2 }}
+            className={`group mb-3 block w-full break-inside-avoid text-left sm:mb-5 md:mb-7 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#873f43] ${featured ? 'border border-[#ded8cc] bg-[#fffaf2] p-1.5 shadow-[0_18px_45px_-20px_rgba(40,39,34,0.24)] sm:p-2 lg:p-3' : ''}`}
+            onClick={() => onImageClick(image)}
+            aria-label={`Xem ảnh: ${image.title}`}
+          >
+            <div className="relative overflow-hidden border border-[#ded8cc] bg-[#e8e3d6] transition-all duration-500 ease-out group-hover:border-[#c4bcb0] group-hover:shadow-[0_20px_50px_-12px_rgba(40,39,34,0.18)]">
+              <img
+                src={getCloudinaryUrl(image.url, { width: 900 })}
+                width={image.width}
+                height={image.height}
+                alt={image.title}
+                className="block h-auto w-full transition-transform duration-700 ease-out group-hover:scale-[1.05]"
+                loading="lazy"
+                decoding="async"
+              />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#282722]/40 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-focus-visible:opacity-100"
+              />
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 ring-2 ring-inset ring-[#873f43] ring-offset-2 ring-offset-[#f6f2e9] opacity-0 transition-opacity duration-200 group-focus-visible:opacity-100"
+              />
+            </div>
+          </motion.button>
+        );
+      })}
     </motion.div>
   );
 };

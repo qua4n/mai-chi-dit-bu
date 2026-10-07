@@ -12,8 +12,3 @@ export interface GalleryImage {
     format: string;
   };
 }
-
-export enum AppView {
-  GALLERY = 'GALLERY',
-  TIMELINE = 'TIMELINE'
-}

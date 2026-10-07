@@ -3,7 +3,7 @@
  * Cloudinary Frontend Delivery Service
  */
 
-const CLOUD_NAME = 'dadfqpexa';
+const CLOUD_NAME = 'ezn0gp0q';
 // Ưu tiên lấy Tag từ biến môi trường, mặc định là 'all' hoặc 'maichi'
 const TAG_NAME = (process.env as any).CLOUDINARY_TAG || 'all'; 
 

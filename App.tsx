@@ -2,19 +2,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import Background from './components/Background';
-import CustomCursor from './components/CustomCursor';
 import GalleryGrid from './components/GalleryGrid';
 import Lightbox from './components/Lightbox';
-import Timeline from './components/Timeline';
 import LoveTimer from './components/LoveTimer';
-import { AppView, GalleryImage } from './types';
+import MessageForm from './components/MessageForm';
+import { GalleryImage } from './types';
 import { fetchImagesFromCloudinary } from './services/cloudinaryService';
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<AppView>(AppView.GALLERY);
   const [activeImage, setActiveImage] = useState<GalleryImage | null>(null);
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const loadImages = useCallback(async () => {
     setIsLoading(true);
@@ -32,93 +31,102 @@ const App: React.FC = () => {
     loadImages();
   }, [loadImages]);
 
+  useEffect(() => {
+    const updateBackToTop = () => setShowBackToTop(window.scrollY > 500);
+    updateBackToTop();
+    window.addEventListener('scroll', updateBackToTop, { passive: true });
+    return () => window.removeEventListener('scroll', updateBackToTop);
+  }, []);
+
   return (
-    <div className="min-h-screen selection:bg-pink-200">
-      <CustomCursor />
+    <div className="min-h-screen selection:bg-[#873f43] selection:text-white">
       <Background />
-      <Header currentView={currentView} setView={setCurrentView} />
+      <Header />
 
-      <main className="transition-all duration-1000 ease-in-out">
-        {currentView === AppView.GALLERY ? (
-          <>
-            <section className="pt-48 md:pt-64 px-6 text-center max-w-6xl mx-auto">
-              <div className="flex flex-col items-center mb-16 md:mb-32">
-                <div className="animate-float mb-8">
-                   <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="#FF758C"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                </div>
-                
-                <h1 className="text-6xl sm:text-8xl md:text-9xl font-black tracking-tighter mb-6 text-serif leading-[0.85] select-none text-romantic drop-shadow-sm">
-                  Mai Chi <span className="italic block md:inline font-normal opacity-90 text-script text-pink-400">đít bự</span>
-                </h1>
-                
-                <div className="max-w-xl mx-auto space-y-8 mt-4 animate-reveal" style={{ animationDelay: '0.3s' }}>
-                  <p className="text-[10px] md:text-xs uppercase tracking-[0.5em] font-black text-pink-400">
-                    Bảo Tàng Kỷ Niệm • Bloom Edition
-                  </p>
-                  
-                  <div className="glass px-10 py-12 rounded-[3rem] border-pink-100/50 shadow-2xl shadow-pink-200/40">
-                    <LoveTimer />
-                  </div>
-                </div>
-              </div>
-            </section>
+      <main id="top">
+        <section className="mx-auto max-w-7xl px-5 pb-8 pt-12 sm:px-8 sm:pb-10 sm:pt-16 lg:px-12 lg:pb-14 lg:pt-20">
+          <div className="grid items-center gap-12 border-b border-[#ded8cc] pb-14 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-14 lg:pb-20">
+            <div>
+              <p className="mb-8 flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.25em] text-[#873f43]">
+                <span className="h-px w-8 bg-[#873f43]" />
+                A Love Story with...
+              </p>
+              <h1 className="max-w-4xl text-serif text-[clamp(3.7rem,9vw,8.5rem)] font-normal leading-[1.02] tracking-[-0.06em] text-[#282722]">
+                Mai Chi <span className="block italic text-[#873f43]">đít bự.
+                  <svg aria-hidden="true" viewBox="0 0 64 64" className="ml-3 inline-block h-[0.52em] w-[0.52em] animate-bounce align-middle not-italic" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="36" r="23" fill="#ed913f" />
+                    <path d="M32 14c2-7 8-10 15-8-2 7-7 11-15 10" fill="#67815c" />
+                    <path d="M30 17c-3-3-7-4-11-3" fill="none" stroke="#67815c" strokeWidth="3" strokeLinecap="round" />
+                    <circle cx="23" cy="28" r="5" fill="#ffb873" opacity=".7" />
+                  </svg>
+                </span>
+              </h1>
+              <p className="mt-8 max-w-lg text-base leading-7 text-[#77766e]">
+                “It wasn't a long journey, but it wasn't a short one either. There were good days, difficult ones, plenty to remember, and a lot we learned as we grew up together.”
+              </p>
+            </div>
+            <div className="relative overflow-hidden bg-[#f0ece3] p-6 sm:p-9">
+              <div aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-52 w-52 rounded-full border border-[#fffaf2]/15" />
+              <LoveTimer />
+            </div>
+          </div>
+        </section>
 
-            {isLoading ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-10 px-6 md:px-20 pb-20">
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="aspect-[3/4] bg-white/40 rounded-[2.5rem] border-4 border-white animate-pulse"></div>
-                ))}
-              </div>
-            ) : images.length > 0 ? (
-              <div className="px-6 md:px-20 pb-40">
-                <GalleryGrid 
-                  images={images} 
-                  onImageClick={setActiveImage} 
-                />
-              </div>
-            ) : (
-              <div className="text-center py-40 flex flex-col items-center gap-8 animate-reveal">
-                <h3 className="text-serif text-3xl italic text-pink-300">Archive is blooming...</h3>
-                <button onClick={loadImages} className="px-8 py-3 bg-pink-500 text-white rounded-full text-[10px] font-black uppercase tracking-[0.3em] hover:bg-pink-600 shadow-lg transition-all">Reload Collection</button>
-              </div>
+        <MessageForm />
+
+        <section className="mx-auto max-w-7xl px-5 pb-24 sm:px-8 lg:px-12 lg:pb-36" aria-labelledby="album-title">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4 sm:mb-12">
+            <div>
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-[#873f43]">02 / Album</p>
+              <h2 id="album-title" className="text-serif text-4xl leading-tight sm:text-5xl">Us</h2>
+            </div>
+            {!isLoading && images.length > 0 && (
+              <p className="text-xs uppercase tracking-[0.18em] text-[#77766e]">{images.length} bức ảnh</p>
             )}
-          </>
-        ) : (
-          <Timeline />
-        )}
+          </div>
+          {isLoading ? (
+            <div aria-live="polite" className="grid grid-cols-2 gap-4 sm:gap-7 lg:grid-cols-3">
+              <span className="sr-only">Đang tải ảnh...</span>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="aspect-[4/5] animate-pulse bg-[#e9e3d8]" />
+              ))}
+            </div>
+          ) : images.length > 0 ? (
+            <GalleryGrid images={images} onImageClick={setActiveImage} />
+          ) : (
+            <div className="border-y border-[#ded8cc] py-20 text-center sm:py-28">
+              <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#873f43]">Album đang chờ ảnh</p>
+              <h3 className="text-serif text-3xl italic sm:text-4xl">Chưa có khoảnh khắc nào được tải.</h3>
+              <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#77766e]">Hãy thử tải lại bộ sưu tập.</p>
+              <button type="button" onClick={loadImages} className="mt-8 border-b border-[#873f43] pb-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#873f43] hover:text-[#282722]">
+                Tải lại ảnh ↗
+              </button>
+            </div>
+          )}
+        </section>
       </main>
 
       <Lightbox image={activeImage} onClose={() => setActiveImage(null)} />
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })}
+          aria-label="Về đầu trang"
+          className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[#873f43] text-white shadow-[0_8px_24px_rgba(40,39,34,0.3)] transition-colors hover:bg-[#6e3036] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#873f43] sm:bottom-8 sm:right-8"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 sm:h-6 sm:w-6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m6 12 6-6 6 6M12 6v12" />
+          </svg>
+        </button>
+      )}
 
-      {/* Romantic Footer */}
-      <footer className="py-32 px-10 flex flex-col items-center glass border-t-2 border-white mt-40 rounded-t-[5rem]">
-        <div className="max-w-7xl w-full flex flex-col md:flex-row justify-between items-center gap-12 md:gap-0">
-          <div className="text-center md:text-left space-y-3">
-             <div className="text-3xl font-black text-script text-pink-500">M.C Archive</div>
-             <p className="text-[9px] uppercase tracking-[0.4em] text-pink-300 font-bold italic">Always blooming with love</p>
-          </div>
-          
-          <div className="flex flex-col items-center gap-4">
-             <div className="w-16 h-16 rounded-full glass border-2 border-pink-200 flex items-center justify-center animate-float">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FF758C"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-             </div>
-             <p className="text-[10px] uppercase tracking-[0.5em] font-black text-pink-400">Since April 2025</p>
-          </div>
-          
-          <div className="text-center md:text-right text-[10px] uppercase tracking-[0.2em] space-y-2 font-bold text-gray-400">
-            <p className="text-pink-400">Made for Mai Chi</p>
-            <p>Digital Archive v1.2</p>
-          </div>
+      <footer className="bg-[#282722] text-[#f6f2e9]">
+        <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8 sm:py-14 lg:px-12 lg:py-16">
+          <p className="text-center text-serif text-base italic leading-snug text-[#f6f2e9] sm:text-lg">
+            A quiet archive of us.
+          </p>
         </div>
       </footer>
-      
-      <style>{`
-        @keyframes reveal {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-reveal { animation: reveal 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-      `}</style>
     </div>
   );
 };
