@@ -8,12 +8,17 @@ import LoveTimer from './components/LoveTimer';
 import MessageForm from './components/MessageForm';
 import { GalleryImage } from './types';
 import { fetchImagesFromCloudinary } from './services/cloudinaryService';
+import { trackVisitor } from './services/analyticsService';
 
 const App: React.FC = () => {
   const [activeImage, setActiveImage] = useState<GalleryImage | null>(null);
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    trackVisitor();
+  }, []);
 
   const loadImages = useCallback(async () => {
     setIsLoading(true);
