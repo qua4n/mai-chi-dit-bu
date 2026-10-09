@@ -27,6 +27,14 @@ function parseUserAgent(ua: string) {
   return { os, browser, type: isMobile ? 'Điện thoại' : 'Máy tính' };
 }
 
+function formatDuration(seconds: number): string {
+  if (seconds <= 0) return '1 giây';
+  if (seconds < 60) return `${seconds} giây`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s > 0 ? `${m} phút ${s} giây` : `${m} phút`;
+}
+
 export default async function handler(request: Request): Promise<Response> {
   if (request.method !== 'POST') {
     return Response.json({ error: 'Phương thức không được hỗ trợ' }, { status: 405 });
@@ -47,7 +55,6 @@ export default async function handler(request: Request): Promise<Response> {
     body = {};
   }
 
-  // Lấy thông tin từ headers (Vercel Edge tự động cung cấp)
   const headers = request.headers;
   const ip = headers.get('x-forwarded-for')?.split(',')[0]?.trim() || headers.get('x-real-ip') || 'Không rõ IP';
   const city = headers.get('x-vercel-ip-city') ? decodeURIComponent(headers.get('x-vercel-ip-city')!) : '';
@@ -60,38 +67,50 @@ export default async function handler(request: Request): Promise<Response> {
 
   const { os, browser, type } = parseUserAgent(uaString);
 
-  // Dữ liệu từ client
-  const screen = (typeof body.screen === 'string' && body.screen) ? escapeHtml(body.screen) : 'Không rõ';
-  const viewport = (typeof body.viewport === 'string' && body.viewport) ? escapeHtml(body.viewport) : 'Không rõ';
-  const language = (typeof body.language === 'string' && body.language) ? escapeHtml(body.language) : 'vi';
-  const timezone = (typeof body.timezone === 'string' && body.timezone) ? escapeHtml(body.timezone) : 'Asia/Ho_Chi_Minh';
-  const referrer = (typeof body.referrer === 'string' && body.referrer) ? escapeHtml(body.referrer) : 'Trực tiếp / Không có';
-  const pathname = (typeof body.pathname === 'string' && body.pathname) ? escapeHtml(body.pathname) : '/';
+  const eventType = body.type === 'leave' ? 'leave' : 'enter';
 
-  // Thời gian theo giờ Việt Nam
-  const visitTime = new Intl.DateTimeFormat('vi-VN', {
-    timeZone: 'Asia/Ho_Chi_Minh',
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(new Date());
+  let message = '';
 
-  const message = [
-    '🔔 <b>Có khách mới truy cập website!</b>',
-    '',
-    `⏰ <b>Thời gian:</b> ${escapeHtml(visitTime)} (GMT+7)`,
-    `📍 <b>Vị trí:</b> ${escapeHtml(location)}`,
-    `🌐 <b>IP:</b> <code>${escapeHtml(ip)}</code>`,
-    `📱 <b>Thiết bị:</b> ${type} (${os} • ${browser})`,
-    `🖥 <b>Màn hình:</b> ${screen} (Khung nhìn: ${viewport})`,
-    `🗣 <b>Ngôn ngữ & Múi giờ:</b> ${language} (${timezone})`,
-    `🔗 <b>Nguồn giới thiệu:</b> ${referrer}`,
-    `📄 <b>Đường dẫn:</b> <code>${pathname}</code>`,
-  ].join('\n');
+  if (eventType === 'enter') {
+    const visitTime = new Intl.DateTimeFormat('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }).format(new Date());
+
+    message = [
+      '🟢 <b>Khách truy cập website</b>',
+      '',
+      `⏰ <b>Thời gian:</b> ${escapeHtml(visitTime)} (GMT+7)`,
+      `📍 <b>Vị trí:</b> ${escapeHtml(location)}`,
+      `🌐 <b>IP:</b> <code>${escapeHtml(ip)}</code>`,
+      `📱 <b>Thiết bị:</b> ${type} (${os} • ${browser})`,
+    ].join('\n');
+  } else {
+    // Sự kiện khi khách rời đi
+    const durationNum = typeof body.duration === 'number' ? Math.round(body.duration) : 0;
+    const durationStr = formatDuration(durationNum);
+
+    const clickedImages = Array.isArray(body.clickedImages) ? body.clickedImages : [];
+    let imagesContent = 'Chưa click xem ảnh nào';
+    if (clickedImages.length > 0) {
+      imagesContent = `${clickedImages.length} ảnh\n` + clickedImages.map((img) => `   • ${escapeHtml(String(img))}`).join('\n');
+    }
+
+    message = [
+      '🔴 <b>Khách rời trang</b>',
+      '',
+      `⏱ <b>Thời gian ở lại:</b> ${escapeHtml(durationStr)}`,
+      `🖼 <b>Ảnh đã xem:</b> ${imagesContent}`,
+      `📍 <b>Vị trí:</b> ${escapeHtml(location)} (IP: <code>${escapeHtml(ip)}</code>)`,
+      `📱 <b>Thiết bị:</b> ${type} (${os} • ${browser})`,
+    ].join('\n');
+  }
 
   try {
     const telegramRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {

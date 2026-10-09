@@ -8,7 +8,7 @@ import LoveTimer from './components/LoveTimer';
 import MessageForm from './components/MessageForm';
 import { GalleryImage } from './types';
 import { fetchImagesFromCloudinary } from './services/cloudinaryService';
-import { trackVisitor } from './services/analyticsService';
+import { initAnalytics, recordImageClick } from './services/analyticsService';
 
 const App: React.FC = () => {
   const [activeImage, setActiveImage] = useState<GalleryImage | null>(null);
@@ -17,7 +17,12 @@ const App: React.FC = () => {
   const [showBackToTop, setShowBackToTop] = useState(false);
 
   useEffect(() => {
-    trackVisitor();
+    return initAnalytics();
+  }, []);
+
+  const handleImageClick = useCallback((image: GalleryImage) => {
+    setActiveImage(image);
+    recordImageClick(image.title || image.id || 'Ảnh kỷ niệm');
   }, []);
 
   const loadImages = useCallback(async () => {
@@ -97,7 +102,7 @@ const App: React.FC = () => {
               ))}
             </div>
           ) : images.length > 0 ? (
-            <GalleryGrid images={images} onImageClick={setActiveImage} />
+            <GalleryGrid images={images} onImageClick={handleImageClick} />
           ) : (
             <div className="border-y border-[#ded8cc] py-20 text-center sm:py-28">
               <p className="mb-4 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#873f43]">Album đang chờ ảnh</p>

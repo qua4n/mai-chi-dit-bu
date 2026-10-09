@@ -1,33 +1,69 @@
-const SESSION_LOG_KEY = 'maichi_visit_logged';
+let clickedImages: string[] = [];
+let startTime = 0;
+let hasSentLeave = false;
 
-export function trackVisitor(): void {
-  if (typeof window === 'undefined') return;
+export function recordImageClick(imageTitle: string): void {
+  const cleanTitle = imageTitle.trim() || 'Ảnh không tên';
+  if (!clickedImages.includes(cleanTitle)) {
+    clickedImages.push(cleanTitle);
+  }
+}
 
+export function initAnalytics(): () => void {
+  if (typeof window === 'undefined') {
+    return () => {};
+  }
+
+  startTime = Date.now();
+  hasSentLeave = false;
+  clickedImages = [];
+
+  // Gửi thông báo khi khách vừa vào trang (kể cả F5)
   try {
-    // Chỉ ghi nhận 1 lần trong mỗi phiên (session) để tránh spam khi F5
-    if (sessionStorage.getItem(SESSION_LOG_KEY)) {
-      return;
-    }
-    sessionStorage.setItem(SESSION_LOG_KEY, 'true');
-
-    const data = {
-      screen: `${window.screen?.width || 0}x${window.screen?.height || 0}`,
-      viewport: `${window.innerWidth || 0}x${window.innerHeight || 0}`,
-      language: navigator.language || 'vi',
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Ho_Chi_Minh',
-      referrer: document.referrer || 'Trực tiếp / Không có',
-      pathname: `${window.location.pathname}${window.location.search}`,
-    };
-
     fetch('/api/visit', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
+      body: JSON.stringify({ type: 'enter' }),
       keepalive: true,
-    }).catch(() => {
-      // Không ném lỗi ra ngoài để đảm bảo trải nghiệm người dùng
-    });
+    }).catch(() => {});
   } catch {
-    // Phòng ngừa trường hợp trình duyệt chặn sessionStorage
+    // Không làm gián đoạn người dùng
   }
+
+  // Gửi thông báo khi khách rời đi
+  const sendLeaveEvent = () => {
+    if (hasSentLeave) return;
+    hasSentLeave = true;
+
+    const duration = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+
+    try {
+      fetch('/api/visit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'leave',
+          duration,
+          clickedImages,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      // Bỏ qua lỗi
+    }
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') {
+      sendLeaveEvent();
+    }
+  };
+
+  window.addEventListener('pagehide', sendLeaveEvent);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+
+  return () => {
+    window.removeEventListener('pagehide', sendLeaveEvent);
+    document.removeEventListener('visibilitychange', handleVisibilityChange);
+  };
 }
