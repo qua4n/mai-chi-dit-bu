@@ -5,7 +5,7 @@ import { getCloudinaryUrl } from '../services/cloudinaryService';
 
 interface GalleryGridProps {
   images: GalleryImage[];
-  onImageClick: (image: GalleryImage) => void;
+  onImageClick: (image: GalleryImage, index: number) => void;
 }
 
 const containerVariants: Variants = {
@@ -51,7 +51,7 @@ const GalleryGrid: React.FC<GalleryGridProps> = ({ images, onImageClick }) => {
             whileInView="visible"
             viewport={{ once: true, amount: 0.2 }}
             className={`group mb-3 block w-full break-inside-avoid text-left sm:mb-5 md:mb-7 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#873f43] ${featured ? 'border border-[#ded8cc] bg-[#fffaf2] p-1.5 shadow-[0_18px_45px_-20px_rgba(40,39,34,0.24)] sm:p-2 lg:p-3' : ''}`}
-            onClick={() => onImageClick(image)}
+            onClick={() => onImageClick(image, index)}
             aria-label={`Xem ảnh: ${image.title}`}
           >
             <div className="relative overflow-hidden border border-[#ded8cc] bg-[#e8e3d6] transition-all duration-500 ease-out group-hover:border-[#c4bcb0] group-hover:shadow-[0_20px_50px_-12px_rgba(40,39,34,0.18)]">

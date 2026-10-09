@@ -99,7 +99,7 @@ export default async function handler(request: Request): Promise<Response> {
     const clickedImages = Array.isArray(body.clickedImages) ? body.clickedImages : [];
     let imagesContent = 'Chưa click xem ảnh nào';
     if (clickedImages.length > 0) {
-      imagesContent = `${clickedImages.length} ảnh\n` + clickedImages.map((img) => `   • ${escapeHtml(String(img))}`).join('\n');
+      imagesContent = `${clickedImages.length} ảnh (Ảnh số: ${clickedImages.join(', ')})`;
     }
 
     message = [

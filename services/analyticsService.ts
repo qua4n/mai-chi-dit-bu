@@ -1,11 +1,13 @@
-let clickedImages: string[] = [];
+let clickedImageIndices: number[] = [];
 let startTime = 0;
 let hasSentLeave = false;
 
-export function recordImageClick(imageTitle: string): void {
-  const cleanTitle = imageTitle.trim() || 'Ảnh không tên';
-  if (!clickedImages.includes(cleanTitle)) {
-    clickedImages.push(cleanTitle);
+export function recordImageClick(imageOrder: number): void {
+  if (typeof imageOrder === 'number' && imageOrder > 0) {
+    if (!clickedImageIndices.includes(imageOrder)) {
+      clickedImageIndices.push(imageOrder);
+      clickedImageIndices.sort((a, b) => a - b);
+    }
   }
 }
 
@@ -16,7 +18,7 @@ export function initAnalytics(): () => void {
 
   startTime = Date.now();
   hasSentLeave = false;
-  clickedImages = [];
+  clickedImageIndices = [];
 
   // Gửi thông báo khi khách vừa vào trang (kể cả F5)
   try {
@@ -44,7 +46,7 @@ export function initAnalytics(): () => void {
         body: JSON.stringify({
           type: 'leave',
           duration,
-          clickedImages,
+          clickedImages: clickedImageIndices,
         }),
         keepalive: true,
       }).catch(() => {});

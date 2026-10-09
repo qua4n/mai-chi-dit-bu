@@ -20,9 +20,9 @@ const App: React.FC = () => {
     return initAnalytics();
   }, []);
 
-  const handleImageClick = useCallback((image: GalleryImage) => {
+  const handleImageClick = useCallback((image: GalleryImage, index: number) => {
     setActiveImage(image);
-    recordImageClick(image.title || image.id || 'Ảnh kỷ niệm');
+    recordImageClick(index + 1);
   }, []);
 
   const loadImages = useCallback(async () => {
